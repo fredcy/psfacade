@@ -6,12 +6,22 @@ import (
 	"time"
 )
 
-func GetTeacherSched(name string) {
+type Meeting struct {
+	loginid string
+	start time.Time
+	duration int
+	course_name string
+	course_number string
+	section_number int
+	room string
+}
+
+func GetTeacherSched(name string) <-chan Meeting {
 	config := GetConfig("ps.conf")
 	query := `
     with
     sm1 as (select sm.sectionid, sm.cycle_day_letter, min(sm.period_number) period_min from section_meeting sm group by sectionid, cycle_day_letter),
-    sm2 as (select sm.sectionid, sm.cycle_day_letter,max(sm.period_number) period_max from section_meeting sm group by sectionid, cycle_day_letter)
+    sm2 as (select sm.sectionid, sm.cycle_day_letter, max(sm.period_number) period_max from section_meeting sm group by sectionid, cycle_day_letter)
     select
     teachers.loginid,
     to_char(cd.date_value, 'YYYYMMDD') "date",
@@ -39,56 +49,53 @@ func GetTeacherSched(name string) {
     -- matched against bell schedule to determine if that day has the periods, and get the actual period times
     where
     s.schoolid = 140177
-    and terms.yearid = :1
-    and teachers.loginid = :2
+    and terms.yearid = :yearid
+    and teachers.loginid = :loginid
     and period1.period_number < 21
     and s.course_number not in ('SLD100', 'SLD210', 'SLD600')  -- Res Life, LEAD, I-Day Attendance
     and teachers.loginid is not null  -- ignore placeholders like "Staff, New"
     order by teachers.loginid, cd.date_value, sm1.period_min
 `
-	yearid := 23				// BUG(fcy) should calculate
+	now := time.Now()
+	var academicyear int
+	if now.Month() < 7 {
+		academicyear = now.Year()
+	} else {
+		academicyear = now.Year() + 1
+	}
+	yearid := academicyear - 1991 // the usual PowerSchool conversion
+	//log.Printf("yearid = %v", yearid)
 	rows, err := RunQuery(config, query, yearid, name)
 	if err != nil {
-		log.Panic("query failed: %v", err)
+		log.Panicf("query failed: %v", err)
 	}
-	defer rows.Close()
-	cols, err := rows.Columns()
-	if err != nil {
-		log.Panic("Columns() failed: %v", err)
-	}
-	log.Printf("cols = %v\n", cols)
-	var (
-		date string
-		start string
-	)
-	type meeting struct {
-		loginid string
-		start time.Time
-		duration int
-		course_name string
-		course_number string
-		section_number int
-		room string
-	}
-	loc, err:= time.LoadLocation("America/Chicago")
-	if err != nil {
-		log.Panicf("LoadLocation failed: %v", err)
-	}
-	for rows.Next() {
-		m := meeting{}
-		err = rows.Scan(&m.loginid, &date, &start, &m.duration, &m.course_name, &m.course_number, &m.section_number, &m.room)
+	ch := make(chan Meeting)
+	go func() {
+		defer rows.Close()		// must be inside goroutine so we don't close until done
+		var (
+			date string
+			start string
+		)
+		loc, err:= time.LoadLocation("America/Chicago")
 		if err != nil {
-			log.Panicf("rows.Scan(): %v", err)
+			log.Panicf("LoadLocation failed: %v", err)
 		}
-		datetimestr := date + start
-		m.start, err = time.ParseInLocation("200601021504", datetimestr, loc)
-		if err != nil {
-			log.Panic("time.Parse(): %v", err)
+		for rows.Next() {
+			m := Meeting{}
+			err = rows.Scan(&m.loginid, &date, &start, &m.duration, &m.course_name, &m.course_number, &m.section_number, &m.room)
+			if err != nil {
+				log.Panicf("rows.Scan(): %v", err)
+			}
+			datetimestr := date + start
+			m.start, err = time.ParseInLocation("200601021504", datetimestr, loc)
+			if err != nil {
+				log.Panic("time.Parse(): %v", err)
+			}
+			//log.Printf("m = %v, m.start = %v, datetimestr = %v", m, m.start, datetimestr)
+			ch <- m
 		}
-		log.Printf("m = %v, m.start = %v, datetimestr = %v", m, m.start, datetimestr)
-	}
+		close(ch)
+	}()
+	return ch
 }
 
-func main() {
-	GetTeacherSched("fogel")
-}

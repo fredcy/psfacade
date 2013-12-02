@@ -2,6 +2,7 @@ package psfacade
 
 import (
 	"fmt"
+	_ "log"
 	"testing"
 )
 
@@ -42,5 +43,16 @@ func TestSimpleQuery(t *testing.T) {
 }
 
 func TestTeacherSched(t *testing.T) {
-	GetTeacherSched("fogel")
+	ch := GetTeacherSched("fogel")
+	var c int
+	for mtg := range ch {
+		if mtg.loginid != "fogel" {
+			t.Errorf("mtg.loginid = %v, expected fogel")
+		}
+		c++
+	}
+	expected := 360
+	if c != expected {
+		t.Errorf("count is %v, expected %v", c, expected)
+	}
 }

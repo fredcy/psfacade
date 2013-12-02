@@ -20,7 +20,7 @@ type Configuration struct {
 func GetConfig(filename string) Configuration {
 	conffile, err := os.Open(filename)
 	if err != nil {
-		log.Panic("cannot open config file (%v)", filename)
+		log.Panicf("cannot open config file (%v)", filename)
 	}
 	decoder := json.NewDecoder(conffile)
 	configuration := Configuration{}
