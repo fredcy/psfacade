@@ -21,12 +21,22 @@ func TestSimpleQuery(t *testing.T) {
 	}
 	defer rows2.Close()
 
+	var sns []float64
 	for rows2.Next() {
 		var student_number float64
 		err = rows2.Scan(&student_number)
 		if err != nil {
 			t.Errorf("rows2.Scan: %v", err)
 		}
+		sns = append(sns, student_number)
 		fmt.Printf("student_number = %v\n", student_number)
+	}
+	if len(sns) != 2 {
+		t.Errorf("len(sns): expected 2, got %v", len(sns))
+	}
+
+	err = rows.Err()
+	if err != nil {
+		t.Errorf("rows.Err: %v", err)
 	}
 }
