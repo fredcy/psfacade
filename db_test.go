@@ -40,3 +40,7 @@ func TestSimpleQuery(t *testing.T) {
 		t.Errorf("rows.Err: %v", err)
 	}
 }
+
+func TestTeacherSched(t *testing.T) {
+	GetTeacherSched("Fogel")
+}
