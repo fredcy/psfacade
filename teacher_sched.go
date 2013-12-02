@@ -1,10 +1,9 @@
 package psfacade
 
 import (
-	"fmt"
+	_ "fmt"
 	"log"
-	_ "database/sql"
-	_ "reflect"
+	"time"
 )
 
 func GetTeacherSched(name string) {
@@ -41,7 +40,7 @@ func GetTeacherSched(name string) {
     where
     s.schoolid = 140177
     and terms.yearid = :1
-    and teachers.last_name = :2
+    and teachers.loginid = :2
     and period1.period_number < 21
     and s.course_number not in ('SLD100', 'SLD210', 'SLD600')  -- Res Life, LEAD, I-Day Attendance
     and teachers.loginid is not null  -- ignore placeholders like "Staff, New"
@@ -57,23 +56,36 @@ func GetTeacherSched(name string) {
 	if err != nil {
 		log.Panic("Columns() failed: %v", err)
 	}
-	fmt.Printf("cols = %v\n", cols)
+	log.Printf("cols = %v\n", cols)
 	var (
-		loginid string
 		date string
 		start string
+	)
+	type meeting struct {
+		loginid string
+		start time.Time
 		duration int
 		course_name string
 		course_number string
 		section_number int
 		room string
-	)
+	}
+	loc, err:= time.LoadLocation("America/Chicago")
+	if err != nil {
+		log.Panicf("LoadLocation failed: %v", err)
+	}
 	for rows.Next() {
-		err = rows.Scan(&loginid, &date, &start, &duration, &course_name, &course_number, &section_number, &room)
+		m := meeting{}
+		err = rows.Scan(&m.loginid, &date, &start, &m.duration, &m.course_name, &m.course_number, &m.section_number, &m.room)
 		if err != nil {
-			log.Panic("rows.Scan(): %v", err)
+			log.Panicf("rows.Scan(): %v", err)
 		}
-		fmt.Printf("got row: %v %v %v %v %v %v %v %v\n", loginid, date, start, duration, course_name, course_number, section_number, room)
+		datetimestr := date + start
+		m.start, err = time.ParseInLocation("200601021504", datetimestr, loc)
+		if err != nil {
+			log.Panic("time.Parse(): %v", err)
+		}
+		log.Printf("m = %v, m.start = %v, datetimestr = %v", m, m.start, datetimestr)
 	}
 }
 

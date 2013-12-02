@@ -42,5 +42,5 @@ func TestSimpleQuery(t *testing.T) {
 }
 
 func TestTeacherSched(t *testing.T) {
-	GetTeacherSched("Fogel")
+	GetTeacherSched("fogel")
 }
