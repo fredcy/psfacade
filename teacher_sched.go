@@ -1,9 +1,10 @@
 package psfacade
 
 import (
-	_ "fmt"
+	"fmt"
 	"log"
 	"time"
+	ical "github.com/fredcy/icalendar"
 )
 
 type Meeting struct {
@@ -99,3 +100,72 @@ func GetTeacherSched(name string) <-chan Meeting {
 	return ch
 }
 
+func cal_timezone() ical.Component {
+	timezone := ical.Component{}
+	timezone.SetName("VTIMEZONE")
+	timezone.Set("TZID", ical.VString("America/Chicago"))
+	daylight := ical.Component{}
+	daylight.SetName("DAYLIGHT")
+	daylight.Add("tzname", ical.VString("CDT"))
+	daylight.Add("tzoffsetfrom", ical.VUtcOffset(-6*3600))
+	daylight.Add("tzoffsetto", ical.VUtcOffset(-5*3600))
+	daylight.Add("dtstart", ical.VDateTime(time.Date(1970, 3, 8, 2, 0, 0, 0, time.UTC)))
+	rrv := ical.VEnumList{}
+	rrv.AddValue("FREQ", ical.VString("YEARLY"))
+	rrv.AddValue("BYMONTH", ical.VInt(3))
+	rrv.AddValue("BYDAY", ical.VString("2SU"))
+	daylight.Add("RRULE", rrv)
+	timezone.AddComponent(&daylight)
+	standard := ical.Component{}
+	standard.SetName("STANDARD")
+	standard.Add("tzname", ical.VString("CST"))
+	standard.Add("tzoffsetfrom", ical.VUtcOffset(-5*3600))
+	standard.Add("tzoffsetto", ical.VUtcOffset(-6*3600))
+	standard.Add("dtstart", ical.VDateTime(time.Date(1970, 11, 1, 2, 0, 0, 0, time.UTC)))
+	rrv = ical.VEnumList{}
+	rrv.AddValue("FREQ", ical.VString("YEARLY"))
+	rrv.AddValue("BYMONTH", ical.VInt(11))
+	rrv.AddValue("BYDAY", ical.VString("1SU"))
+	standard.Add("RRULE", rrv)
+	timezone.AddComponent(&standard)
+	return timezone
+}
+
+func TeacherCalendar(loginid string) string {
+	ch := GetTeacherSched(loginid)
+	cal := ical.Component{}
+	cal.SetName("VCALENDAR")
+	cal.Set("VERSION", ical.VString("2.0"))
+	cal.Set("PRODID", ical.VStringf("-//imsa.edu//powerschool calendar for %s//EN", loginid))
+	cal.Set("METHOD", ical.VString("PUBLISH"))
+	cal.Set("CALSCALE", ical.VString("GREGORIAN"))
+	cal.Set("x-wr-calname", ical.VStringf("%s@imsa.edu PowerSchool", loginid))
+	cal.Set("x-wr-caldesc", ical.VStringf("IMSA PowerSchool teacher calendar for %s", loginid))
+	cal.Set("x-wrt-timezone", ical.VString("America/Chicago"))
+	timezone := cal_timezone()
+	cal.AddComponent(&timezone)
+		
+	for mtg := range ch {
+		e := ical.Component{}
+		e.SetName("VEVENT")
+		dtstart := ical.VDateTime(mtg.start)
+		e.Set("DTSTART", dtstart)
+		e.Set("DURATION", ical.VInt(mtg.duration))
+		e.Set("SUMMARY", ical.VString(mtg.course_name))
+		e.Set("DESCRIPTION", ical.VString(fmt.Sprintf("%s (%s-%d) -- %s",
+			mtg.course_name, mtg.course_number, mtg.section_number, mtg.room)))
+		organizer := ical.NewProperty("ORGANIZER", ical.VString(fmt.Sprintf("mailto:%s@imsa.edu", mtg.loginid)))
+		//organizer.AddParameter("CN", ical.VString("TODO-CN"))
+		e.AddProperty(organizer)
+		e.Set("DTSTAMP", ical.VDateTime(time.Now()))
+		e.Set("UID", ical.VString(fmt.Sprintf("%s-TODO@imsa.edu", dtstart.String())))
+		attendee := ical.NewProperty("ATTENDEE", ical.VString(fmt.Sprintf("mailto:%s@imsa.edu", mtg.loginid)))
+		attendee.AddParameter("PARTSTAT", ical.VString("ACCEPTED"))
+		attendee.AddParameter("ROLE", ical.VString("REQ-PARTICIPANT"))
+		//attendee.AddParameter("CN", ical.VString("TODO-CN"))
+		// TODO: add attendee for room
+		e.AddProperty(attendee)
+		cal.AddComponent(&e)
+	}
+	return cal.String()
+}
