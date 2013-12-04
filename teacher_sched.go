@@ -150,7 +150,7 @@ func TeacherCalendar(loginid string) string {
 		e.SetName("VEVENT")
 		dtstart := ical.VDateTime(mtg.start)
 		e.Set("DTSTART", dtstart)
-		e.Set("DURATION", ical.VInt(mtg.duration))
+		e.Set("DURATION", ical.VDuration(time.Duration(mtg.duration)*time.Minute))
 		e.Set("SUMMARY", ical.VString(mtg.course_name))
 		e.Set("DESCRIPTION", ical.VString(fmt.Sprintf("%s (%s-%d) -- %s",
 			mtg.course_name, mtg.course_number, mtg.section_number, mtg.room)))
