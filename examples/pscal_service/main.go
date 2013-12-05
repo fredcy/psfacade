@@ -30,6 +30,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 	cal := psfacade.TeacherCalendar(db, loginid)
+	w.Header().Set("Cache-Control", "public,max-age=3600")
 	w.Write([]byte(cal))
 	endtime := time.Now()
 	log.Printf("served %v to %v in %v", r.URL, r.RemoteAddr, endtime.Sub(starttime))
