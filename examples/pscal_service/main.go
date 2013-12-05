@@ -3,16 +3,17 @@ package main
 import (
 	"database/sql"
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
 	"github.com/fredcy/psfacade"
+	"os"
 	"time"
 )
 
 const prefix = "/pscal/"
 
-var conffilename = flag.String("conf", "ps.conf", "PowerSchool database connection config file")
 var port = flag.String("port", "8080", "Listen and serve on this port")
 var logflags = flag.Int("logflags", 3, "Flags to standard logger")
 
@@ -38,10 +39,13 @@ func main() {
 	var err error
 	flag.Parse()
 	log.SetFlags(*logflags)
-	config := psfacade.GetConfig(*conffilename)
-	dsn = psfacade.MakeDSN(config)
+	user := os.Getenv("PS_USER")
+	password := os.Getenv("PS_PASSWORD")
+	host := os.Getenv("PS_HOST")
+	dsn = fmt.Sprintf("%s/%s@//%s:1521/PSProdDB", user, password, host)
 
 	http.HandleFunc(prefix, handler)
+	log.Printf("PowerSchool host is %s", host)
 	log.Printf("Listening on port %s", *port)
 	err = http.ListenAndServe(":" + *port, nil)
 	if err != nil {
