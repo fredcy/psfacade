@@ -1,6 +1,7 @@
 package psfacade
 
 import (
+	"database/sql"
 	"fmt"
 	_ "log"
 	"testing"
@@ -43,7 +44,13 @@ func TestSimpleQuery(t *testing.T) {
 }
 
 func TestTeacherSched(t *testing.T) {
-	ch := GetTeacherSched("fogel")
+	config := GetConfig("ps.conf")
+	db, err := sql.Open("oci8", MakeDSN(config))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ch := GetTeacherSched(db, "fogel")
 	var c int
 	for mtg := range ch {
 		if mtg.loginid != "fogel" {

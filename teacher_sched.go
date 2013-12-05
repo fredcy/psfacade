@@ -1,6 +1,7 @@
 package psfacade
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"time"
@@ -17,8 +18,7 @@ type Meeting struct {
 	room string
 }
 
-func GetTeacherSched(name string) <-chan Meeting {
-	config := GetConfig("ps.conf")
+func GetTeacherSched(db *sql.DB, name string) <-chan Meeting {
 	query := `
     with
     sm1 as (select sm.sectionid, sm.cycle_day_letter, min(sm.period_number) period_min from section_meeting sm group by sectionid, cycle_day_letter),
@@ -66,7 +66,8 @@ func GetTeacherSched(name string) <-chan Meeting {
 	}
 	yearid := academicyear - 1991 // the usual PowerSchool conversion
 	//log.Printf("yearid = %v", yearid)
-	rows, err := RunQuery(config, query, yearid, name)
+
+	rows, err := db.Query(query, yearid, name)
 	if err != nil {
 		log.Panicf("query failed: %v", err)
 	}
@@ -131,8 +132,8 @@ func cal_timezone() ical.Component {
 	return timezone
 }
 
-func TeacherCalendar(loginid string) string {
-	ch := GetTeacherSched(loginid)
+func TeacherCalendar(db *sql.DB, loginid string) string {
+	ch := GetTeacherSched(db, loginid)
 	cal := ical.Component{}
 	cal.SetName("VCALENDAR")
 	cal.Set("VERSION", ical.VString("2.0"))

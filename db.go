@@ -22,6 +22,7 @@ func GetConfig(filename string) Configuration {
 	if err != nil {
 		log.Panicf("cannot open config file (%v)", filename)
 	}
+	log.Printf("Reading %s for Oracle config", filename)
 	decoder := json.NewDecoder(conffile)
 	configuration := Configuration{}
 	jerr := decoder.Decode(&configuration)
