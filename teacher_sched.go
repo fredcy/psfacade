@@ -8,6 +8,8 @@ import (
 	ical "github.com/fredcy/icalendar"
 )
 
+// Meeting holds all PowerSchool data for a single teacher schedule
+// event, a course meeting.
 type Meeting struct {
 	loginid string
 	start time.Time
@@ -18,6 +20,7 @@ type Meeting struct {
 	room string
 }
 
+// GetTeacherSched returns a channel of Meeting items for the given teacher username.
 func GetTeacherSched(db *sql.DB, name string) <-chan Meeting {
 	query := `
     with
@@ -101,6 +104,7 @@ func GetTeacherSched(db *sql.DB, name string) <-chan Meeting {
 	return ch
 }
 
+// cal_timezone returns a standard VTIMEZONE element for the America/Chicago zone
 func cal_timezone() ical.Component {
 	timezone := ical.Component{}
 	timezone.SetName("VTIMEZONE")
@@ -132,7 +136,10 @@ func cal_timezone() ical.Component {
 	return timezone
 }
 
-func TeacherCalendar(db *sql.DB, loginid string) string {
+// timezone is the constant VTIMEZONE element for our calendars
+var Timezone = cal_timezone()
+
+func TeacherCalendar(db *sql.DB, loginid string) *ical.Component {
 	ch := GetTeacherSched(db, loginid)
 	cal := ical.Component{}
 	cal.SetName("VCALENDAR")
@@ -143,8 +150,7 @@ func TeacherCalendar(db *sql.DB, loginid string) string {
 	cal.Set("x-wr-calname", ical.VStringf("%s@imsa.edu PowerSchool", loginid))
 	cal.Set("x-wr-caldesc", ical.VStringf("IMSA PowerSchool teacher calendar for %s", loginid))
 	cal.Set("x-wrt-timezone", ical.VString("America/Chicago"))
-	timezone := cal_timezone()
-	cal.AddComponent(&timezone)
+	cal.AddComponent(&Timezone)
 		
 	for mtg := range ch {
 		e := ical.Component{}
@@ -168,5 +174,5 @@ func TeacherCalendar(db *sql.DB, loginid string) string {
 		e.AddProperty(attendee)
 		cal.AddComponent(&e)
 	}
-	return cal.String()
+	return &cal
 }

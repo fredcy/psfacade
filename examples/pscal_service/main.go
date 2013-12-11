@@ -3,25 +3,37 @@ package main
 import (
 	"database/sql"
 	"flag"
-	"fmt"
 	"log"
 	"net/http"
-	_ "net/http/pprof"
 	"github.com/fredcy/psfacade"
 	"os"
+	"regexp"
+	"strings"
 	"time"
 )
 
 const prefix = "/pscal/"
 
-var port = flag.String("port", "8080", "Listen and serve on this port")
+var address = flag.String("address", ":8080", "Listen and serve at this address")
 var logflags = flag.Int("logflags", 3, "Flags to standard logger")
 
 var dsn string
+var dsnre = regexp.MustCompile(`^(.*?)/(.*?)@//(.*?):(.*)`)
 
-var slog *log.Logger
+// set_dsn sets the DSN for accessing the PowerSchool database.
+func set_dsn() {
+	dsn = os.Getenv("PS_DSN")
+	match := dsnre.FindStringSubmatch(dsn)
+	if match == nil {
+		log.Panic("DSN value is not well formed:", dsn)
+	}
+	pshost := match[3]
+	log.Printf("PowerSchool host is %s", pshost)
+}
 
-func handler(w http.ResponseWriter, r *http.Request) {
+// calhander responds with the icalendar data for the teacher whose
+// username is given in the request URL path.
+func calhandler(w http.ResponseWriter, r *http.Request) {
 	starttime := time.Now()
 	loginid := r.URL.Path[len(prefix):]
 	db, err := sql.Open("oci8", dsn)
@@ -31,25 +43,26 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 	cal := psfacade.TeacherCalendar(db, loginid)
 	w.Header().Set("Cache-Control", "public,max-age=3600")
-	w.Write([]byte(cal))
+	w.Header().Set("Content-Type", "text/calendar")
+	w.Write([]byte(cal.String()))
 	endtime := time.Now()
-	log.Printf("served %v to %v in %v", r.URL, r.RemoteAddr, endtime.Sub(starttime))
+
+	client := r.RemoteAddr
+	forwarded_for := strings.Join(r.Header["X-Forwarded-For"], "")
+	if forwarded_for != "" {
+		client += " (" + forwarded_for + ")"
+	}
+	log.Printf("served %v (%d components) to %v in %v",
+		r.URL, cal.CountComponents(), client, endtime.Sub(starttime))
 }
 
 func main() {
-	var err error
 	flag.Parse()
 	log.SetFlags(*logflags)
-	user := os.Getenv("PS_USER")
-	password := os.Getenv("PS_PASSWORD")
-	host := os.Getenv("PS_HOST")
-	dsn = fmt.Sprintf("%s/%s@//%s:1521/PSProdDB", user, password, host)
+	set_dsn()
 
-	http.HandleFunc(prefix, handler)
-	log.Printf("PowerSchool host is %s", host)
-	log.Printf("Listening on port %s", *port)
-	err = http.ListenAndServe(":" + *port, nil)
-	if err != nil {
-		log.Panic(err)
-	}
+	http.HandleFunc(prefix, calhandler)
+
+	log.Printf("Listening at %s", *address)
+	log.Fatal(http.ListenAndServe(*address, nil))
 }
