@@ -53,7 +53,7 @@ func calhandler(w http.ResponseWriter, r *http.Request) {
 		client += " (" + forwarded_for + ")"
 	}
 	log.Printf("served %v (%d components) to %v in %v",
-		r.URL, cal.CountComponents(), client, endtime.Sub(starttime))
+		r.URL, cal.ComponentCount(), client, endtime.Sub(starttime))
 }
 
 func main() {
