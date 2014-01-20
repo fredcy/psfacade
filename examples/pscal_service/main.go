@@ -44,6 +44,7 @@ func calhandler(w http.ResponseWriter, r *http.Request) {
 	cal := psfacade.TeacherCalendar(db, loginid)
 	w.Header().Set("Cache-Control", "public,max-age=3600")
 	w.Header().Set("Content-Type", "text/calendar")
+	w.Header().Set("Last-Modified", starttime.Format("Mon, 02 Jan 2006 15:04:05 MST"))
 	w.Write([]byte(cal.String()))
 	endtime := time.Now()
 
