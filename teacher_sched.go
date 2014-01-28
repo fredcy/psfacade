@@ -57,7 +57,7 @@ func GetTeacherSched(db *sql.DB, name string) <-chan Meeting {
     and terms.yearid = :yearid
     and teachers.loginid = :loginid
     and period1.period_number < 21
-    and s.course_number not in ('SLD100', 'SLD200', 'SLD210', 'SLD600')  -- Res Life, Nav, LEAD, I-Day Attendance
+    and s.course_number not in ('SLD100', 'SLD102', 'SLD200', 'SLD210', 'SLD600')  -- Res Life, LASSI, Nav, LEAD, I-Day Attendance
     and teachers.loginid is not null  -- ignore placeholders like "Staff, New"
     order by teachers.loginid, cd.date_value, sm1.period_min
 `
