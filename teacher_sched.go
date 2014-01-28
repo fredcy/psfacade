@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
 	"time"
 	ical "github.com/fredcy/icalendar"
 )
@@ -56,7 +57,7 @@ func GetTeacherSched(db *sql.DB, name string) <-chan Meeting {
     and terms.yearid = :yearid
     and teachers.loginid = :loginid
     and period1.period_number < 21
-    and s.course_number not in ('SLD100', 'SLD210', 'SLD600')  -- Res Life, LEAD, I-Day Attendance
+    and s.course_number not in ('SLD100', 'SLD200', 'SLD210', 'SLD600')  -- Res Life, Nav, LEAD, I-Day Attendance
     and teachers.loginid is not null  -- ignore placeholders like "Staff, New"
     order by teachers.loginid, cd.date_value, sm1.period_min
 `
@@ -69,6 +70,10 @@ func GetTeacherSched(db *sql.DB, name string) <-chan Meeting {
 	}
 	yearid := academicyear - 1991 // the usual PowerSchool conversion
 	//log.Printf("yearid = %v", yearid)
+
+	if os.Getenv("TEACHER_SCHED_DEBUG") != "" {
+		log.Printf("yearid=%v, name=%v, query=%v", yearid, name, query)
+	}
 
 	rows, err := db.Query(query, yearid, name)
 	if err != nil {
