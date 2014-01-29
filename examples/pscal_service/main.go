@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"github.com/fredcy/psfacade"
@@ -16,6 +17,7 @@ const prefix = "/pscal/"
 
 var address = flag.String("address", ":8080", "Listen and serve at this address")
 var logflags = flag.Int("logflags", 3, "Flags to standard logger")
+var maxage = flag.Int("maxage", 8*3600, "Cache-Control max-age value")
 
 var dsn string
 var dsnre = regexp.MustCompile(`^(.*?)/(.*?)@//(.*?):(.*)`)
@@ -42,7 +44,7 @@ func calhandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 	cal := psfacade.TeacherCalendar(db, loginid)
-	w.Header().Set("Cache-Control", "public,max-age=3600")
+	w.Header().Set("Cache-Control", fmt.Sprintf("public,max-age=%d", *maxage))
 	w.Header().Set("Content-Type", "text/calendar")
 	w.Header().Set("Last-Modified", starttime.Format("Mon, 02 Jan 2006 15:04:05 MST"))
 	w.Write([]byte(cal.String()))
