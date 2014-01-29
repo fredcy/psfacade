@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-const prefix = "/pscal/"
+const prefix = "/pscal/u/"
 
 var address = flag.String("address", ":8080", "Listen and serve at this address")
 var logflags = flag.Int("logflags", 3, "Flags to standard logger")
