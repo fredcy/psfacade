@@ -63,3 +63,12 @@ func TestTeacherSched(t *testing.T) {
 		t.Errorf("count is %v, expected %v", c, expected)
 	}
 }
+
+func TestCalendar(t *testing.T) {
+	config := GetConfig("ps.conf")
+	db, err := sql.Open("oci8", MakeDSN(config))
+	if err != nil {
+		t.Fatal()
+	}
+	GetCalendar(db)
+}

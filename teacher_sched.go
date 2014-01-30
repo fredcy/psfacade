@@ -61,16 +61,7 @@ func GetTeacherSched(db *sql.DB, name string) <-chan Meeting {
     and teachers.loginid is not null  -- ignore placeholders like "Staff, New"
     order by teachers.loginid, cd.date_value, sm1.period_min
 `
-	now := time.Now()
-	var academicyear int
-	if now.Month() < 7 {
-		academicyear = now.Year()
-	} else {
-		academicyear = now.Year() + 1
-	}
-	yearid := academicyear - 1991 // the usual PowerSchool conversion
-	//log.Printf("yearid = %v", yearid)
-
+	yearid := get_yearid()
 	if os.Getenv("TEACHER_SCHED_DEBUG") != "" {
 		log.Printf("yearid=%v, name=%v, query=%v", yearid, name, query)
 	}
