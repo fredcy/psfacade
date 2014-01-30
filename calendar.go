@@ -80,7 +80,6 @@ func GetCalendar(db *sql.DB) *ical.Component {
     cal.AddComponent(&vtimezone)
 
 	dtstamp := ical.VDateTime(time.Now())
-	duration := ical.VDuration(time.Duration(time.Hour * 24)) // all events are full day
 	for day := range days {
 		summary := format_summary(&day)
 		if summary == "" {
@@ -88,9 +87,11 @@ func GetCalendar(db *sql.DB) *ical.Component {
 		}
 		e := ical.Component{}
 		e.SetName("VEVENT")
-		dtstart := ical.VDateTime(day.date)
+		dtstart := ical.VDate(day.date)
+		dtend := ical.VDate(day.date.AddDate(0, 0, 1)) // add one day
+		// this pattern of start and end makes the event an all-day event that displays at top
 		e.Set("DTSTART", dtstart)
-		e.Set("DURATION", duration)
+		e.Set("DTEND", dtend)
 		e.Set("SUMMARY", ical.VString(summary))
 		e.Set("DESCRIPTION", ical.VString(format_description(&day)))
 		e.Set("DTSTAMP", dtstamp)
