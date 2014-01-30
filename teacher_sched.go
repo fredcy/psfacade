@@ -124,16 +124,16 @@ func TeacherCalendar(db *sql.DB, loginid string) *ical.Component {
 		e.Set("DESCRIPTION", ical.VString(fmt.Sprintf("%s (%s-%d) -- %s",
 			mtg.course_name, mtg.course_number, mtg.section_number, mtg.room)))
 		organizer := ical.NewProperty("ORGANIZER", ical.VString(fmt.Sprintf("mailto:%s@imsa.edu", mtg.loginid)))
-		//organizer.AddParameter("CN", ical.VString("TODO-CN"))
-		e.AddProperty(organizer)
+		//organizer.Add("CN", ical.VString("TODO-CN"))
+		e.AddProperty(&organizer)
 		e.Set("DTSTAMP", ical.VDateTime(time.Now()))
 		e.Set("UID", ical.VString(fmt.Sprintf("%s-TODO@imsa.edu", dtstart.String())))
 		attendee := ical.NewProperty("ATTENDEE", ical.VString(fmt.Sprintf("mailto:%s@imsa.edu", mtg.loginid)))
-		attendee.AddParameter("PARTSTAT", ical.VString("ACCEPTED"))
-		attendee.AddParameter("ROLE", ical.VString("REQ-PARTICIPANT"))
-		//attendee.AddParameter("CN", ical.VString("TODO-CN"))
+		attendee.Add("PARTSTAT", ical.VString("ACCEPTED"))
+		attendee.Add("ROLE", ical.VString("REQ-PARTICIPANT"))
+		//attendee.Add("CN", ical.VString("TODO-CN"))
 		// TODO: add attendee for room
-		e.AddProperty(attendee)
+		e.AddProperty(&attendee)
 		cal.AddComponent(&e)
 	}
 	return &cal

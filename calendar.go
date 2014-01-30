@@ -87,15 +87,13 @@ func GetCalendar(db *sql.DB) *ical.Component {
 		}
 		e := ical.Component{}
 		e.SetName("VEVENT")
-		dtstart := ical.VDate(day.date)
-		dtend := ical.VDate(day.date.AddDate(0, 0, 1)) // add one day
+		e.Set("DTSTART", ical.VDate(day.date)).Add("VALUE", ical.VString("DATE"))
+		e.Set("DTEND", ical.VDate(day.date.AddDate(0, 0, 1))).Add("VALUE", ical.VString("DATE"))
 		// this pattern of start and end makes the event an all-day event that displays at top
-		e.Set("DTSTART", dtstart)
-		e.Set("DTEND", dtend)
 		e.Set("SUMMARY", ical.VString(summary))
 		e.Set("DESCRIPTION", ical.VString(format_description(&day)))
 		e.Set("DTSTAMP", dtstamp)
-		e.Set("UID", ical.VString(fmt.Sprintf("PS-Calendar-%v@imsa.edu", dtstart)))
+		e.Set("UID", ical.VString(fmt.Sprintf("PS-Calendar-%s@imsa.edu", day.date.Format("20060102"))))
 		cal.AddComponent(&e)
 	}
 	return &cal
