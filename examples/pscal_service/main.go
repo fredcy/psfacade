@@ -13,7 +13,8 @@ import (
 	"time"
 )
 
-const prefix = "/pscal/u/"
+const userprefix = "/pscal/u/"
+const calprefix = "/pscal/cal"
 
 var address = flag.String("address", ":8080", "Listen and serve at this address")
 var logflags = flag.Int("logflags", 3, "Flags to standard logger")
@@ -33,11 +34,11 @@ func set_dsn() {
 	log.Printf("PowerSchool host is %s", pshost)
 }
 
-// calhander responds with the icalendar data for the teacher whose
+// usercalhander responds with the icalendar data for the teacher whose
 // username is given in the request URL path.
-func calhandler(w http.ResponseWriter, r *http.Request) {
+func usercalhandler(w http.ResponseWriter, r *http.Request) {
 	starttime := time.Now()
-	loginid := r.URL.Path[len(prefix):]
+	loginid := r.URL.Path[len(userprefix):]
 	db, err := sql.Open("oci8", dsn)
 	if err != nil {
 		log.Panicf("Cannot open database: %s", err)
@@ -59,12 +60,24 @@ func calhandler(w http.ResponseWriter, r *http.Request) {
 		r.URL, cal.ComponentCount(), client, endtime.Sub(starttime))
 }
 
+func calhandler(w http.ResponseWriter, r *http.Request) {
+	db, err := sql.Open("oci8", dsn)
+	if err != nil {
+		log.Panicf("Cannot open database: %s", err)
+	}
+	defer db.Close()
+	cal := psfacade.GetCalendar(db)
+	w.Write([]byte(cal.String()))
+	log.Printf("served PS cal")
+}
+
 func main() {
 	flag.Parse()
 	log.SetFlags(*logflags)
 	set_dsn()
 
-	http.HandleFunc(prefix, calhandler)
+	http.HandleFunc(userprefix, usercalhandler)
+	http.HandleFunc(calprefix, calhandler)
 
 	log.Printf("Listening at %s", *address)
 	log.Fatal(http.ListenAndServe(*address, nil))

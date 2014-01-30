@@ -70,5 +70,6 @@ func TestCalendar(t *testing.T) {
 	if err != nil {
 		t.Fatal()
 	}
-	GetCalendar(db)
+	cal := GetCalendar(db)
+	fmt.Print(cal)
 }
