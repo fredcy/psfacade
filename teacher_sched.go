@@ -127,7 +127,8 @@ func TeacherCalendar(db *sql.DB, loginid string) *ical.Component {
 		//organizer.Add("CN", ical.VString("TODO-CN"))
 		e.AddProperty(&organizer)
 		e.Set("DTSTAMP", ical.VDateTime(time.Now()))
-		e.Set("UID", ical.VString(fmt.Sprintf("%s-TODO@imsa.edu", dtstart.String())))
+		e.Set("UID", ical.VString(fmt.Sprintf("PS-%s-%d-%s@imsa.edu",
+			mtg.course_number, mtg.section_number, dtstart.String())))
 		attendee := ical.NewProperty("ATTENDEE", ical.VString(fmt.Sprintf("mailto:%s@imsa.edu", mtg.loginid)))
 		attendee.Add("PARTSTAT", ical.VString("ACCEPTED"))
 		attendee.Add("ROLE", ical.VString("REQ-PARTICIPANT"))
