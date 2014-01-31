@@ -18,6 +18,7 @@ type CalDay struct {
 	cycle_day string
 }
 
+// Return a channel with all of the calendar items
 func GetCalendarDays(db *sql.DB) <-chan CalDay {
 	query := `
 SELECT to_char(cd.date_value, 'IYYY-MM-DD') date_str, cd.insession, cd.note, bs.name, cyd.abbreviation
@@ -65,6 +66,7 @@ where terms.id = :termid and terms.schoolid = 140177
 	return days
 }
 
+// Generate iCalendar data for PowerSchool common calendar (ABCDI days, bell schedules, notes)
 func GetCalendar(db *sql.DB) *ical.Component {
 	days := GetCalendarDays(db)
     cal := ical.Component{}
@@ -107,6 +109,7 @@ var cycle_day_display = map[string]bool {
 	"I": true,
 }
 
+// Generate SUMMARY string for given calendar item
 func format_summary(day *CalDay) string {
 	var summary string
 	if cycle_day_display[day.cycle_day] {
@@ -126,6 +129,7 @@ func format_summary(day *CalDay) string {
 	return summary
 }
 
+// Generate DESCRIPTION string for given calendar item
 func format_description(day *CalDay) string {
 	var description string
 	if day.cycle_day != "" {

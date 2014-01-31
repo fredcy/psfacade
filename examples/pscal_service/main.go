@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	ical "github.com/fredcy/icalendar"
 	"log"
 	"net/http"
 	"github.com/fredcy/psfacade"
@@ -34,41 +35,44 @@ func set_dsn() {
 	log.Printf("PowerSchool host is %s", pshost)
 }
 
-// usercalhander responds with the icalendar data for the teacher whose
-// username is given in the request URL path.
-func usercalhandler(w http.ResponseWriter, r *http.Request) {
-	starttime := time.Now()
-	loginid := r.URL.Path[len(userprefix):]
-	db, err := sql.Open("oci8", dsn)
-	if err != nil {
-		log.Panicf("Cannot open database: %s", err)
-	}
-	defer db.Close()
-	cal := psfacade.TeacherCalendar(db, loginid)
-	w.Header().Set("Cache-Control", fmt.Sprintf("public,max-age=%d", *maxage))
-	w.Header().Set("Content-Type", "text/calendar")
-	w.Header().Set("Last-Modified", starttime.Format("Mon, 02 Jan 2006 15:04:05 MST"))
-	w.Write([]byte(cal.String()))
-	endtime := time.Now()
+func calhandler(generator func(*http.Request) *ical.Component) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		starttime := time.Now()
+		w.Header().Set("Cache-Control", fmt.Sprintf("public,max-age=%d", *maxage))
+		w.Header().Set("Content-Type", "text/calendar")
+		w.Header().Set("Last-Modified", starttime.Format("Mon, 02 Jan 2006 15:04:05 MST"))
 
-	client := r.RemoteAddr
-	forwarded_for := strings.Join(r.Header["X-Forwarded-For"], "")
-	if forwarded_for != "" {
-		client += " (" + forwarded_for + ")"
+		cal := generator(r)
+		w.Write([]byte(cal.String()))
+
+		client := r.RemoteAddr
+		forwarded_for := strings.Join(r.Header["X-Forwarded-For"], "")
+		if forwarded_for != "" {
+			client += " (" + forwarded_for + ")"
+		}
+		endtime := time.Now()
+		log.Printf("served %v (%d components) to %v in %v",
+			r.URL, cal.ComponentCount(), client, endtime.Sub(starttime))
 	}
-	log.Printf("served %v (%d components) to %v in %v",
-		r.URL, cal.ComponentCount(), client, endtime.Sub(starttime))
 }
 
-func calhandler(w http.ResponseWriter, r *http.Request) {
+func usergenerator(r *http.Request) *ical.Component {
 	db, err := sql.Open("oci8", dsn)
 	if err != nil {
 		log.Panicf("Cannot open database: %s", err)
 	}
 	defer db.Close()
-	cal := psfacade.GetCalendar(db)
-	w.Write([]byte(cal.String()))
-	log.Printf("served PS cal")
+	loginid := r.URL.Path[len(userprefix):]
+	return psfacade.TeacherCalendar(db, loginid)
+}
+
+func maingenerator(r *http.Request) *ical.Component {
+	db, err := sql.Open("oci8", dsn)
+	if err != nil {
+		log.Panicf("Cannot open database: %s", err)
+	}
+	defer db.Close()
+	return psfacade.GetCalendar(db)
 }
 
 func main() {
@@ -76,8 +80,8 @@ func main() {
 	log.SetFlags(*logflags)
 	set_dsn()
 
-	http.HandleFunc(userprefix, usercalhandler)
-	http.HandleFunc(calprefix, calhandler)
+	http.HandleFunc(userprefix, calhandler(usergenerator))
+	http.HandleFunc(calprefix, calhandler(maingenerator))
 
 	log.Printf("Listening at %s", *address)
 	log.Fatal(http.ListenAndServe(*address, nil))
