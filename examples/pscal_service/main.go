@@ -15,6 +15,7 @@ import (
 )
 
 const userprefix = "/pscal/u/"
+const roomprefix = "/pscal/r/"
 const calprefix = "/pscal/cal"
 
 var address = flag.String("address", ":8080", "Listen and serve at this address")
@@ -66,6 +67,16 @@ func usergenerator(r *http.Request) *ical.Component {
 	return psfacade.TeacherCalendar(db, loginid)
 }
 
+func roomgenerator(r *http.Request) *ical.Component {
+	db, err := sql.Open("oci8", dsn)
+	if err != nil {
+		log.Panicf("Cannot open database: %s", err)
+	}
+	defer db.Close()
+	roomname := r.URL.Path[len(roomprefix):]
+	return psfacade.RoomCalendar(db, roomname)
+}
+
 func maingenerator(r *http.Request) *ical.Component {
 	db, err := sql.Open("oci8", dsn)
 	if err != nil {
@@ -81,6 +92,7 @@ func main() {
 	set_dsn()
 
 	http.HandleFunc(userprefix, calhandler(usergenerator))
+	http.HandleFunc(roomprefix, calhandler(roomgenerator))
 	http.HandleFunc(calprefix, calhandler(maingenerator))
 
 	log.Printf("Listening at %s", *address)
