@@ -165,7 +165,8 @@ func TeacherCalendar(db *sql.DB, loginid string) *ical.Component {
 		e.SetName("VEVENT")
 		dtstart := ical.VDateTime(mtg.start)
 		e.Set("DTSTART", dtstart)
-		e.Set("DURATION", ical.VDuration(time.Duration(mtg.duration)*time.Minute))
+		e.Set("DTEND", ical.VDateTime(mtg.start.Add(time.Duration(mtg.duration)*time.Minute)))
+		//e.Set("DURATION", ical.VDuration(time.Duration(mtg.duration)*time.Minute))
 		e.Set("SUMMARY", ical.VString(mtg.course_name))
 		e.Set("DESCRIPTION", ical.VString(fmt.Sprintf("%s (%s-%d) -- %s",
 			mtg.course_name, mtg.course_number, mtg.section_number, mtg.room)))
@@ -205,7 +206,7 @@ func RoomCalendar(db *sql.DB, room string) *ical.Component {
 		e.SetName("VEVENT")
 		dtstart := ical.VDateTime(mtg.start)
 		e.Set("DTSTART", dtstart)
-		e.Set("DURATION", ical.VDuration(time.Duration(mtg.duration)*time.Minute))
+		e.Set("DTEND", ical.VDateTime(mtg.start.Add(time.Duration(mtg.duration)*time.Minute)))
 		e.Set("SUMMARY", ical.VString(mtg.course_name))
 		e.Set("DESCRIPTION", ical.VString(fmt.Sprintf("%s (%s-%d) -- %s",
 			mtg.course_name, mtg.course_number, mtg.section_number, mtg.room)))
