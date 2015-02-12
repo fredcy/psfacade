@@ -33,7 +33,7 @@ func GetConfig(filename string) Configuration {
 }
 
 func MakeDSN(config Configuration) string {
-	return fmt.Sprintf("%s/%s@//%s:%s/%s", config.Uid, config.Pwd, config.Server, config.Port, config.Database)
+	return fmt.Sprintf("%s/%s@%s:%s/%s", config.Uid, config.Pwd, config.Server, config.Port, config.Database)
 }
 
 func RunQuery(config Configuration, query string, args ...interface{}) (*sql.Rows, error) {

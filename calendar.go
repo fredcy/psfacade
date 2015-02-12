@@ -18,6 +18,14 @@ type CalDay struct {
 	cycle_day string
 }
 
+func emptyifnull(s sql.NullString) string {
+	if s.Valid {
+		return s.String
+	} else {
+		return ""
+	}
+}
+
 // Return a channel with all of the calendar items
 func GetCalendarDays(db *sql.DB) <-chan CalDay {
 	query := `
@@ -46,14 +54,18 @@ where terms1.id = :termid1 and terms2.id = :termid2 and terms1.schoolid = 140177
 		for rows.Next() {
 			cd := CalDay{}
 			var date string
-			err = rows.Scan(&date, &cd.insession, &cd.note, &cd.bell_sched, &cd.cycle_day)
+			var note, bell_sched, cycle_day sql.NullString
+			err = rows.Scan(&date, &cd.insession, &note, &bell_sched, &cycle_day)
 			if err != nil {
-				log.Panic("rows.Scan", err)
+				log.Panic("rows.Scan: ", err)
 			}
 			cd.date, err = time.Parse("2006-01-02", date)
 			if err != nil {
 				log.Panic("time.Parse ", err)
 			}
+			cd.note = emptyifnull(note)
+			cd.bell_sched = emptyifnull(bell_sched)
+			cd.cycle_day = emptyifnull(cycle_day)
 			if debug {
 				log.Printf("date=%v insession=%v note='%v' bell_sched='%v' cycle_day='%v'",
 					cd.date, cd.insession, cd.note, cd.bell_sched, cd.cycle_day)
