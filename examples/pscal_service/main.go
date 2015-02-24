@@ -23,7 +23,7 @@ var logflags = flag.Int("logflags", 3, "Flags to standard logger")
 var maxage = flag.Int("maxage", 8*3600, "Cache-Control max-age value")
 
 var dsn string
-var dsnre = regexp.MustCompile(`^(.*?)/(.*?)@//(.*?):(.*)`)
+var dsnre = regexp.MustCompile(`^(.*?)/(.*?)@(.*?):(.*)`)
 
 // set_dsn sets the DSN for accessing the PowerSchool database.
 func set_dsn() {
