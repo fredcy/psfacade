@@ -1,3 +1,4 @@
 *~
+*.rpm
 ps.conf
 examples/teacher_calendar/teacher_calendar
