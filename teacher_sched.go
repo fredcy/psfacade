@@ -129,14 +129,17 @@ func GetPSMeetings(db *sql.DB, query string, name string) <-chan Meeting {
 		}
 		for rows.Next() {
 			m := Meeting{}
-			err = rows.Scan(&m.loginid, &date, &start, &m.duration, &m.course_name, &m.course_number, &m.section_number, &m.room)
+			var loginid, room sql.NullString;
+			err = rows.Scan(&loginid, &date, &start, &m.duration, &m.course_name, &m.course_number, &m.section_number, &room)
 			if err != nil {
-				log.Panicf("rows.Scan(): %v", err)
+				log.Panicf("%v, name = '%v'", err, name)
 			}
+			m.loginid = emptyifnull(loginid)
+			m.room = emptyifnull(room)
 			datetimestr := date + start
 			m.start, err = time.ParseInLocation("200601021504", datetimestr, loc)
 			if err != nil {
-				log.Panic("time.Parse(): %v", err)
+				log.Panicf("time.Parse(): %v", err)
 			}
 			//log.Printf("m = %v, m.start = %v, datetimestr = %v", m, m.start, datetimestr)
 			ch <- m

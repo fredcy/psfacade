@@ -5,7 +5,7 @@ install:
 	install -D --mode=640 pscal.conf $(DESTDIR)/etc/init/pscal.conf
 
 VERSION = 1
-ITERATION = 2
+ITERATION = 3
 
 fpm:
 	fpm -s dir -t rpm -n pscal -v $(VERSION) --iteration $(ITERATION) -C $(DESTDIR) --config-files /etc .
