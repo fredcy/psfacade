@@ -4,18 +4,18 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	_ "github.com/mattn/go-oci8" // needed to define "oci8" driver
 	"log"
 	"os"
-	_ "github.com/mattn/go-oci8" // needed to define "oci8" driver
 )
 
 // Configuration defines the PowerSchool database connection
 type Configuration struct {
-	Server	string
-	Port	string
+	Server   string
+	Port     string
 	Database string
-	Uid string
-	Pwd string
+	Uid      string
+	Pwd      string
 }
 
 // GetConfig reads the config file and returns the PowerSchool connection data

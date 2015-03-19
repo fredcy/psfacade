@@ -1,16 +1,16 @@
 package psfacade
 
 import (
-	"log"
 	"database/sql"
+	"log"
 )
 
 // Student is the student data obtained from PowerSchool
 type Student struct {
-	Number string
+	Number    string
 	FirstName string
-	LastName string
-	Room string
+	LastName  string
+	Room      string
 	Birthdate string
 }
 

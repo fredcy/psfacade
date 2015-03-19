@@ -3,22 +3,22 @@ package psfacade
 import (
 	"database/sql"
 	"fmt"
+	ical "github.com/fredcy/icalendar"
 	"log"
 	"os"
 	"time"
-	ical "github.com/fredcy/icalendar"
 )
 
 // Meeting holds all PowerSchool data for a single teacher schedule
 // event, a course meeting.
 type Meeting struct {
-	loginid string
-	start time.Time
-	duration int
-	course_name string
-	course_number string
+	loginid        string
+	start          time.Time
+	duration       int
+	course_name    string
+	course_number  string
 	section_number int
-	room string
+	room           string
 }
 
 // GetTeacherSched returns a channel of Meeting items for the given teacher username.
@@ -121,18 +121,18 @@ func GetPSMeetings(db *sql.DB, query string, name string) <-chan Meeting {
 	}
 	ch := make(chan Meeting)
 	go func() {
-		defer rows.Close()		// must be inside goroutine so we don't close until done
+		defer rows.Close() // must be inside goroutine so we don't close until done
 		var (
-			date string
+			date  string
 			start string
 		)
-		loc, err:= time.LoadLocation("America/Chicago")
+		loc, err := time.LoadLocation("America/Chicago")
 		if err != nil {
 			log.Panicf("LoadLocation failed: %v", err)
 		}
 		for rows.Next() {
 			m := Meeting{}
-			var loginid, room sql.NullString;
+			var loginid, room sql.NullString
 			err = rows.Scan(&loginid, &date, &start, &m.duration, &m.course_name, &m.course_number, &m.section_number, &room)
 			if err != nil {
 				log.Panicf("%v, name = '%v'", err, name)
@@ -166,7 +166,7 @@ func TeacherCalendar(db *sql.DB, loginid string) *ical.Component {
 	cal.Set("x-wrt-timezone", ical.VString("America/Chicago"))
 	vtimezone := cal_timezone()
 	cal.AddComponent(&vtimezone)
-		
+
 	for mtg := range ch {
 		e := ical.Component{}
 		e.SetName("VEVENT")
@@ -208,7 +208,7 @@ func RoomCalendar(db *sql.DB, room string) *ical.Component {
 	cal.Set("x-wrt-timezone", ical.VString("America/Chicago"))
 	vtimezone := cal_timezone()
 	cal.AddComponent(&vtimezone)
-		
+
 	for mtg := range ch {
 		e := ical.Component{}
 		e.SetName("VEVENT")

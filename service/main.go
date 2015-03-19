@@ -1,13 +1,13 @@
 package main
 
 import (
+	"database/sql"
 	"flag"
 	"fmt"
 	"github.com/fredcy/psfacade"
-	"net/http"
 	"log"
+	"net/http"
 	"os"
-	"database/sql"
 	"time"
 )
 

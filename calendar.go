@@ -3,20 +3,20 @@ package psfacade
 import (
 	"database/sql"
 	"fmt"
+	ical "github.com/fredcy/icalendar"
 	"log"
 	"os"
-	ical "github.com/fredcy/icalendar"
 	"strings"
 	"time"
 )
 
 // CalDay is a single PowerSchool calendar day
 type CalDay struct {
-	date time.Time
-	insession int
-	note string
+	date       time.Time
+	insession  int
+	note       string
 	bell_sched string
-	cycle_day string
+	cycle_day  string
 }
 
 func emptyifnull(s sql.NullString) string {
@@ -41,7 +41,9 @@ where terms1.id = :termid1 and terms2.id = :termid2 and terms1.schoolid = 140177
 	termid2 := yearid * 100
 	termid1 := (yearid - 1) * 100
 	debug := os.Getenv("CALENDAR_DEBUG") != ""
-	if debug { log.Println("termid", termid1, "query", query) }
+	if debug {
+		log.Println("termid", termid1, "query", query)
+	}
 
 	rows, err := db.Query(query, termid1, termid2)
 	if err != nil {
@@ -83,17 +85,17 @@ where terms1.id = :termid1 and terms2.id = :termid2 and terms1.schoolid = 140177
 // GetCalendar returns iCalendar data for PowerSchool common calendar (ABCDI days, bell schedules, notes)
 func GetCalendar(db *sql.DB) *ical.Component {
 	days := GetCalendarDays(db)
-    cal := ical.Component{}
-    cal.SetName("VCALENDAR")
-    cal.Set("VERSION", ical.VString("2.0"))
-    cal.Set("PRODID", ical.VStringf("-//imsa.edu//powerschool calendar//EN"))
-    cal.Set("METHOD", ical.VString("PUBLISH"))
-    cal.Set("CALSCALE", ical.VString("GREGORIAN"))
-    cal.Set("x-wr-calname", ical.VStringf("IMSA PowerSchool"))
+	cal := ical.Component{}
+	cal.SetName("VCALENDAR")
+	cal.Set("VERSION", ical.VString("2.0"))
+	cal.Set("PRODID", ical.VStringf("-//imsa.edu//powerschool calendar//EN"))
+	cal.Set("METHOD", ical.VString("PUBLISH"))
+	cal.Set("CALSCALE", ical.VString("GREGORIAN"))
+	cal.Set("x-wr-calname", ical.VStringf("IMSA PowerSchool"))
 	cal.Set("x-wr-caldesc", ical.VStringf("IMSA PowerSchool common calendar"))
-    cal.Set("x-wrt-timezone", ical.VString("America/Chicago"))
-    vtimezone := cal_timezone()
-    cal.AddComponent(&vtimezone)
+	cal.Set("x-wrt-timezone", ical.VString("America/Chicago"))
+	vtimezone := cal_timezone()
+	cal.AddComponent(&vtimezone)
 
 	dtstamp := ical.VDateTime(time.Now())
 	for day := range days {
@@ -115,7 +117,7 @@ func GetCalendar(db *sql.DB) *ical.Component {
 	return &cal
 }
 
-var cycle_day_display = map[string]bool {
+var cycle_day_display = map[string]bool{
 	"A": true,
 	"B": true,
 	"C": true,
@@ -128,7 +130,7 @@ func format_summary(day *CalDay) string {
 	var summary string
 	if cycle_day_display[day.cycle_day] {
 		summary += day.cycle_day
-		if day.bell_sched != "" && ! strings.HasPrefix(day.bell_sched, "Full Day")  {
+		if day.bell_sched != "" && !strings.HasPrefix(day.bell_sched, "Full Day") {
 			summary += fmt.Sprintf(" (%s)", day.bell_sched)
 		}
 	} else {
@@ -157,4 +159,3 @@ func format_description(day *CalDay) string {
 	}
 	return description
 }
-
