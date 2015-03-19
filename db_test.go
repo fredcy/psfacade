@@ -25,13 +25,13 @@ func TestSimpleQuery(t *testing.T) {
 
 	var sns []float64
 	for rows2.Next() {
-		var student_number float64
-		err = rows2.Scan(&student_number)
+		var studentNumber float64
+		err = rows2.Scan(&studentNumber)
 		if err != nil {
 			t.Errorf("rows2.Scan: %v", err)
 		}
-		sns = append(sns, student_number)
-		fmt.Printf("student_number = %v\n", student_number)
+		sns = append(sns, studentNumber)
+		fmt.Printf("studentNumber = %v\n", studentNumber)
 	}
 	if len(sns) != 2 {
 		t.Errorf("len(sns): expected 2, got %v", len(sns))

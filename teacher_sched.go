@@ -12,13 +12,13 @@ import (
 // Meeting holds all PowerSchool data for a single teacher schedule
 // event, a course meeting.
 type Meeting struct {
-	loginid        string
-	start          time.Time
-	duration       int
-	course_name    string
-	course_number  string
-	section_number int
-	room           string
+	loginid       string
+	start         time.Time
+	duration      int
+	courseName    string
+	courseNumber  string
+	sectionNumber int
+	room          string
 }
 
 // GetTeacherSched returns a channel of Meeting items for the given teacher username.
@@ -110,7 +110,7 @@ func GetRoomSched(db *sql.DB, name string) <-chan Meeting {
 // GetPSMeetings runs the given query and returns a channel of Meeting values.
 // Several different queries can use this same processing to generated the Meeting data.
 func GetPSMeetings(db *sql.DB, query string, name string) <-chan Meeting {
-	yearid := get_yearid()
+	yearid := getYearid()
 	if os.Getenv("TEACHER_SCHED_DEBUG") != "" {
 		log.Printf("yearid=%v, name=%v, query=%v", yearid, name, query)
 	}
@@ -133,7 +133,7 @@ func GetPSMeetings(db *sql.DB, query string, name string) <-chan Meeting {
 		for rows.Next() {
 			m := Meeting{}
 			var loginid, room sql.NullString
-			err = rows.Scan(&loginid, &date, &start, &m.duration, &m.course_name, &m.course_number, &m.section_number, &room)
+			err = rows.Scan(&loginid, &date, &start, &m.duration, &m.courseName, &m.courseNumber, &m.sectionNumber, &room)
 			if err != nil {
 				log.Panicf("%v, name = '%v'", err, name)
 			}
@@ -164,7 +164,7 @@ func TeacherCalendar(db *sql.DB, loginid string) *ical.Component {
 	cal.Set("x-wr-calname", ical.VStringf("%s@imsa.edu PowerSchool", loginid))
 	cal.Set("x-wr-caldesc", ical.VStringf("IMSA PowerSchool teacher calendar for %s", loginid))
 	cal.Set("x-wrt-timezone", ical.VString("America/Chicago"))
-	vtimezone := cal_timezone()
+	vtimezone := calTimezone()
 	cal.AddComponent(&vtimezone)
 
 	for mtg := range ch {
@@ -174,15 +174,15 @@ func TeacherCalendar(db *sql.DB, loginid string) *ical.Component {
 		e.Set("DTSTART", dtstart)
 		e.Set("DTEND", ical.VDateTime(mtg.start.Add(time.Duration(mtg.duration)*time.Minute)))
 		//e.Set("DURATION", ical.VDuration(time.Duration(mtg.duration)*time.Minute))
-		e.Set("SUMMARY", ical.VString(mtg.course_name))
+		e.Set("SUMMARY", ical.VString(mtg.courseName))
 		e.Set("DESCRIPTION", ical.VString(fmt.Sprintf("%s (%s-%d) -- %s",
-			mtg.course_name, mtg.course_number, mtg.section_number, mtg.room)))
+			mtg.courseName, mtg.courseNumber, mtg.sectionNumber, mtg.room)))
 		organizer := ical.NewProperty("ORGANIZER", ical.VString(fmt.Sprintf("mailto:%s@imsa.edu", mtg.loginid)))
 		//organizer.Add("CN", ical.VString("TODO-CN"))
 		e.AddProperty(&organizer)
 		e.Set("DTSTAMP", ical.VDateTime(time.Now()))
 		e.Set("UID", ical.VString(fmt.Sprintf("PS-%s-%d-%s@imsa.edu",
-			mtg.course_number, mtg.section_number, dtstart.String())))
+			mtg.courseNumber, mtg.sectionNumber, dtstart.String())))
 		attendee := ical.NewProperty("ATTENDEE", ical.VString(fmt.Sprintf("mailto:%s@imsa.edu", mtg.loginid)))
 		attendee.Add("PARTSTAT", ical.VString("ACCEPTED"))
 		attendee.Add("ROLE", ical.VString("REQ-PARTICIPANT"))
@@ -206,7 +206,7 @@ func RoomCalendar(db *sql.DB, room string) *ical.Component {
 	cal.Set("x-wr-calname", ical.VStringf("Room %s for PowerSchool", room))
 	cal.Set("x-wr-caldesc", ical.VStringf("IMSA PowerSchool room calendar for %s", room))
 	cal.Set("x-wrt-timezone", ical.VString("America/Chicago"))
-	vtimezone := cal_timezone()
+	vtimezone := calTimezone()
 	cal.AddComponent(&vtimezone)
 
 	for mtg := range ch {
@@ -215,15 +215,15 @@ func RoomCalendar(db *sql.DB, room string) *ical.Component {
 		dtstart := ical.VDateTime(mtg.start)
 		e.Set("DTSTART", dtstart)
 		e.Set("DTEND", ical.VDateTime(mtg.start.Add(time.Duration(mtg.duration)*time.Minute)))
-		e.Set("SUMMARY", ical.VString(mtg.course_name))
+		e.Set("SUMMARY", ical.VString(mtg.courseName))
 		e.Set("DESCRIPTION", ical.VString(fmt.Sprintf("%s (%s-%d) -- %s",
-			mtg.course_name, mtg.course_number, mtg.section_number, mtg.room)))
+			mtg.courseName, mtg.courseNumber, mtg.sectionNumber, mtg.room)))
 		organizer := ical.NewProperty("ORGANIZER", ical.VString(fmt.Sprintf("mailto:%s@imsa.edu", mtg.loginid)))
 		//organizer.Add("CN", ical.VString("TODO-CN"))
 		e.AddProperty(&organizer)
 		e.Set("DTSTAMP", ical.VDateTime(time.Now()))
 		e.Set("UID", ical.VString(fmt.Sprintf("PS-%s-%d-%s@imsa.edu",
-			mtg.course_number, mtg.section_number, dtstart.String())))
+			mtg.courseNumber, mtg.sectionNumber, dtstart.String())))
 		attendee := ical.NewProperty("ATTENDEE", ical.VString(fmt.Sprintf("mailto:%s@imsa.edu", mtg.loginid)))
 		attendee.Add("PARTSTAT", ical.VString("ACCEPTED"))
 		attendee.Add("ROLE", ical.VString("REQ-PARTICIPANT"))

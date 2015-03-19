@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func get_yearid() int {
+func getYearid() int {
 	now := time.Now()
 	var academicyear int
 	if now.Month() < 7 {
@@ -18,7 +18,7 @@ func get_yearid() int {
 }
 
 // cal_timezone returns a standard VTIMEZONE element for the America/Chicago zone
-func cal_timezone() ical.Component {
+func calTimezone() ical.Component {
 	timezone := ical.Component{}
 	timezone.SetName("VTIMEZONE")
 	timezone.Set("TZID", ical.VString("America/Chicago"))

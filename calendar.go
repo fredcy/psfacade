@@ -12,11 +12,11 @@ import (
 
 // CalDay is a single PowerSchool calendar day
 type CalDay struct {
-	date       time.Time
-	insession  int
-	note       string
-	bell_sched string
-	cycle_day  string
+	date      time.Time
+	insession int
+	note      string
+	bellSched string
+	cycleDay  string
 }
 
 func emptyifnull(s sql.NullString) string {
@@ -37,7 +37,7 @@ left outer join bell_schedule bs on cd.bell_schedule_id = bs.id
 left outer join cycle_day cyd on cd.cycle_day_id = cyd.id
 where terms1.id = :termid1 and terms2.id = :termid2 and terms1.schoolid = 140177
 `
-	yearid := get_yearid()
+	yearid := getYearid()
 	termid2 := yearid * 100
 	termid1 := (yearid - 1) * 100
 	debug := os.Getenv("CALENDAR_DEBUG") != ""
@@ -56,8 +56,8 @@ where terms1.id = :termid1 and terms2.id = :termid2 and terms1.schoolid = 140177
 		for rows.Next() {
 			cd := CalDay{}
 			var date string
-			var note, bell_sched, cycle_day sql.NullString
-			err = rows.Scan(&date, &cd.insession, &note, &bell_sched, &cycle_day)
+			var note, bellSched, cycleDay sql.NullString
+			err = rows.Scan(&date, &cd.insession, &note, &bellSched, &cycleDay)
 			if err != nil {
 				log.Panic("rows.Scan: ", err)
 			}
@@ -66,11 +66,11 @@ where terms1.id = :termid1 and terms2.id = :termid2 and terms1.schoolid = 140177
 				log.Panic("time.Parse ", err)
 			}
 			cd.note = emptyifnull(note)
-			cd.bell_sched = emptyifnull(bell_sched)
-			cd.cycle_day = emptyifnull(cycle_day)
+			cd.bellSched = emptyifnull(bellSched)
+			cd.cycleDay = emptyifnull(cycleDay)
 			if debug {
-				log.Printf("date=%v insession=%v note='%v' bell_sched='%v' cycle_day='%v'",
-					cd.date, cd.insession, cd.note, cd.bell_sched, cd.cycle_day)
+				log.Printf("date=%v insession=%v note='%v' bellSched='%v' cycleDay='%v'",
+					cd.date, cd.insession, cd.note, cd.bellSched, cd.cycleDay)
 			}
 			days <- cd
 		}
@@ -94,12 +94,12 @@ func GetCalendar(db *sql.DB) *ical.Component {
 	cal.Set("x-wr-calname", ical.VStringf("IMSA PowerSchool"))
 	cal.Set("x-wr-caldesc", ical.VStringf("IMSA PowerSchool common calendar"))
 	cal.Set("x-wrt-timezone", ical.VString("America/Chicago"))
-	vtimezone := cal_timezone()
+	vtimezone := calTimezone()
 	cal.AddComponent(&vtimezone)
 
 	dtstamp := ical.VDateTime(time.Now())
 	for day := range days {
-		summary := format_summary(&day)
+		summary := formatSummary(&day)
 		if summary == "" {
 			continue
 		}
@@ -109,7 +109,7 @@ func GetCalendar(db *sql.DB) *ical.Component {
 		e.Set("DTEND", ical.VDate(day.date.AddDate(0, 0, 1))).Add("VALUE", ical.VString("DATE"))
 		// this pattern of start and end makes the event an all-day event that displays at top
 		e.Set("SUMMARY", ical.VString(summary))
-		e.Set("DESCRIPTION", ical.VString(format_description(&day)))
+		e.Set("DESCRIPTION", ical.VString(formatDescription(&day)))
 		e.Set("DTSTAMP", dtstamp)
 		e.Set("UID", ical.VString(fmt.Sprintf("PS-Calendar-%s@imsa.edu", day.date.Format("20060102"))))
 		cal.AddComponent(&e)
@@ -117,7 +117,7 @@ func GetCalendar(db *sql.DB) *ical.Component {
 	return &cal
 }
 
-var cycle_day_display = map[string]bool{
+var cycleDayDisplay = map[string]bool{
 	"A": true,
 	"B": true,
 	"C": true,
@@ -126,15 +126,15 @@ var cycle_day_display = map[string]bool{
 }
 
 // Generate SUMMARY string for given calendar item
-func format_summary(day *CalDay) string {
+func formatSummary(day *CalDay) string {
 	var summary string
-	if cycle_day_display[day.cycle_day] {
-		summary += day.cycle_day
-		if day.bell_sched != "" && !strings.HasPrefix(day.bell_sched, "Full Day") {
-			summary += fmt.Sprintf(" (%s)", day.bell_sched)
+	if cycleDayDisplay[day.cycleDay] {
+		summary += day.cycleDay
+		if day.bellSched != "" && !strings.HasPrefix(day.bellSched, "Full Day") {
+			summary += fmt.Sprintf(" (%s)", day.bellSched)
 		}
 	} else {
-		//log.Printf("ignoring cycle day %v", day.cycle_day)
+		//log.Printf("ignoring cycle day %v", day.cycleDay)
 	}
 	if day.note != "" {
 		if summary != "" {
@@ -146,13 +146,13 @@ func format_summary(day *CalDay) string {
 }
 
 // Generate DESCRIPTION string for given calendar item
-func format_description(day *CalDay) string {
+func formatDescription(day *CalDay) string {
 	var description string
-	if day.cycle_day != "" {
-		description += ("Cycle Day: " + day.cycle_day + "\n")
+	if day.cycleDay != "" {
+		description += ("Cycle Day: " + day.cycleDay + "\n")
 	}
-	if day.bell_sched != "" {
-		description += ("Bell Schedule: " + day.bell_sched + "\n")
+	if day.bellSched != "" {
+		description += ("Bell Schedule: " + day.bellSched + "\n")
 	}
 	if day.note != "" {
 		description += ("Note: " + day.note + "\n")

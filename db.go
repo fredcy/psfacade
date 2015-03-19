@@ -14,7 +14,7 @@ type Configuration struct {
 	Server   string
 	Port     string
 	Database string
-	Uid      string
+	UID      string
 	Pwd      string
 }
 
@@ -36,7 +36,7 @@ func GetConfig(filename string) Configuration {
 
 // MakeDSN generates an oci8 DSN value from the given Configuration
 func MakeDSN(config Configuration) string {
-	return fmt.Sprintf("%s/%s@%s:%s/%s", config.Uid, config.Pwd, config.Server, config.Port, config.Database)
+	return fmt.Sprintf("%s/%s@%s:%s/%s", config.UID, config.Pwd, config.Server, config.Port, config.Database)
 }
 
 // RunQuery opens the connection defined by the Configuration, runs the query
