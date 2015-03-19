@@ -54,7 +54,7 @@ func TestTeacherSched(t *testing.T) {
 	var c int
 	for mtg := range ch {
 		if mtg.loginid != "fogel" {
-			t.Errorf("mtg.loginid = %v, expected fogel")
+			t.Errorf("mtg.loginid = %v, expected fogel", mtg.loginid)
 		}
 		c++
 	}

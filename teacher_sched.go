@@ -64,6 +64,7 @@ func GetTeacherSched(db *sql.DB, name string) <-chan Meeting {
 	return GetPSMeetings(db, query, name)
 }
 
+// GetRoomSched returns a channel of Meeting values for the given teacher account name
 func GetRoomSched(db *sql.DB, name string) <-chan Meeting {
 	query := `
     with
@@ -106,6 +107,8 @@ func GetRoomSched(db *sql.DB, name string) <-chan Meeting {
 	return GetPSMeetings(db, query, name)
 }
 
+// GetPSMeetings runs the given query and returns a channel of Meeting values.
+// Several different queries can use this same processing to generated the Meeting data.
 func GetPSMeetings(db *sql.DB, query string, name string) <-chan Meeting {
 	yearid := get_yearid()
 	if os.Getenv("TEACHER_SCHED_DEBUG") != "" {
@@ -149,6 +152,7 @@ func GetPSMeetings(db *sql.DB, query string, name string) <-chan Meeting {
 	return ch
 }
 
+// TeacherCalendar returns the iCalendar for the class meetings for the given teacher
 func TeacherCalendar(db *sql.DB, loginid string) *ical.Component {
 	ch := GetTeacherSched(db, loginid)
 	cal := ical.Component{}
@@ -190,6 +194,7 @@ func TeacherCalendar(db *sql.DB, loginid string) *ical.Component {
 	return &cal
 }
 
+// RoomCalendar returns the iCalendar comprising the class meetings in the given room
 func RoomCalendar(db *sql.DB, room string) *ical.Component {
 	ch := GetRoomSched(db, room)
 	cal := ical.Component{}

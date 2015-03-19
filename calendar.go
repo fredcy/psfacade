@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+// CalDay is a single PowerSchool calendar day
 type CalDay struct {
 	date time.Time
 	insession int
@@ -21,12 +22,11 @@ type CalDay struct {
 func emptyifnull(s sql.NullString) string {
 	if s.Valid {
 		return s.String
-	} else {
-		return ""
 	}
+	return ""
 }
 
-// Return a channel with all of the calendar items
+// GetCalendarDays returns a channel with all of the calendar items
 func GetCalendarDays(db *sql.DB) <-chan CalDay {
 	query := `
 SELECT to_char(cd.date_value, 'IYYY-MM-DD') date_str, cd.insession, cd.note, bs.name, cyd.abbreviation
@@ -80,7 +80,7 @@ where terms1.id = :termid1 and terms2.id = :termid2 and terms1.schoolid = 140177
 	return days
 }
 
-// Generate iCalendar data for PowerSchool common calendar (ABCDI days, bell schedules, notes)
+// GetCalendar returns iCalendar data for PowerSchool common calendar (ABCDI days, bell schedules, notes)
 func GetCalendar(db *sql.DB) *ical.Component {
 	days := GetCalendarDays(db)
     cal := ical.Component{}
