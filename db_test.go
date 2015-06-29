@@ -33,8 +33,9 @@ func TestSimpleQuery(t *testing.T) {
 		sns = append(sns, studentNumber)
 		fmt.Printf("studentNumber = %v\n", studentNumber)
 	}
-	if len(sns) != 2 {
-		t.Errorf("len(sns): expected 2, got %v", len(sns))
+	var expected int = 3
+	if len(sns) != expected {
+		t.Errorf("len(sns): expected %v, got %v", expected, len(sns))
 	}
 
 	err = rows.Err()

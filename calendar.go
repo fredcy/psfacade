@@ -31,21 +31,19 @@ func GetCalendarDays(db *sql.DB) <-chan CalDay {
 	query := `
 SELECT to_char(cd.date_value, 'IYYY-MM-DD') date_str, cd.insession, cd.note, bs.name, cyd.abbreviation
 FROM terms terms1
-join terms terms2 on terms1.schoolid = terms2.schoolid
-join calendar_day cd on cd.date_value between terms1.firstday and terms2.lastday and cd.schoolid = terms1.schoolid
+join calendar_day cd on cd.date_value >= terms1.firstday and cd.schoolid = terms1.schoolid
 left outer join bell_schedule bs on cd.bell_schedule_id = bs.id
 left outer join cycle_day cyd on cd.cycle_day_id = cyd.id
-where terms1.id = :termid1 and terms2.id = :termid2 and terms1.schoolid = 140177
+where terms1.id = :termid1 and terms1.schoolid = 140177
 `
 	yearid := getYearid()
-	termid2 := yearid * 100
 	termid1 := (yearid - 1) * 100
 	debug := os.Getenv("CALENDAR_DEBUG") != ""
 	if debug {
 		log.Println("termid", termid1, "query", query)
 	}
 
-	rows, err := db.Query(query, termid1, termid2)
+	rows, err := db.Query(query, termid1)
 	if err != nil {
 		log.Panicf("query failed: %v", err)
 	}
