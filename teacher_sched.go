@@ -17,7 +17,7 @@ type Meeting struct {
 	duration      int
 	courseName    string
 	courseNumber  string
-	sectionNumber int
+	sectionNumber string
 	room          string
 }
 
@@ -175,13 +175,13 @@ func TeacherCalendar(db *sql.DB, loginid string) *ical.Component {
 		e.Set("DTEND", ical.VDateTime(mtg.start.Add(time.Duration(mtg.duration)*time.Minute)))
 		//e.Set("DURATION", ical.VDuration(time.Duration(mtg.duration)*time.Minute))
 		e.Set("SUMMARY", ical.VString(mtg.courseName))
-		e.Set("DESCRIPTION", ical.VString(fmt.Sprintf("%s (%s-%d) -- %s",
+		e.Set("DESCRIPTION", ical.VString(fmt.Sprintf("%s (%s-%s) -- %s",
 			mtg.courseName, mtg.courseNumber, mtg.sectionNumber, mtg.room)))
 		organizer := ical.NewProperty("ORGANIZER", ical.VString(fmt.Sprintf("mailto:%s@imsa.edu", mtg.loginid)))
 		//organizer.Add("CN", ical.VString("TODO-CN"))
 		e.AddProperty(&organizer)
 		e.Set("DTSTAMP", ical.VDateTime(time.Now()))
-		e.Set("UID", ical.VString(fmt.Sprintf("PS-%s-%d-%s@imsa.edu",
+		e.Set("UID", ical.VString(fmt.Sprintf("PS-%s-%s-%s@imsa.edu",
 			mtg.courseNumber, mtg.sectionNumber, dtstart.String())))
 		attendee := ical.NewProperty("ATTENDEE", ical.VString(fmt.Sprintf("mailto:%s@imsa.edu", mtg.loginid)))
 		attendee.Add("PARTSTAT", ical.VString("ACCEPTED"))
