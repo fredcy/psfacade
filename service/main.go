@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/fredcy/psfacade"
@@ -30,13 +31,25 @@ func wraptimer(fn http.HandlerFunc) http.HandlerFunc {
 
 func studentshandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	students := psfacade.GetStudents(db)
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	fmt.Fprintln(w, "[")
+	enc := json.NewEncoder(w)
+
+	first := true
 	for s := range students {
-		_, err := fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", s.Number, s.FirstName, s.LastName, s.Room, s.Birthdate)
-		if err != nil {
+		if !first {
+			fmt.Fprintf(w, ",")
+		}
+
+		if err := enc.Encode(&s); err != nil {
 			log.Println(err)
 			return
 		}
+		first = false
 	}
+
+	fmt.Fprintln(w, "]")
 }
 
 var address = flag.String("address", ":8080", "Listen and serve at this address")
