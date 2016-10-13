@@ -59,6 +59,10 @@ func main() {
 	flag.Parse()
 
 	dsn := os.Getenv("PS_DSN")
+	if dsn == "" {
+		log.Panic("PS_DSN not set")
+	}
+
 	db, err := sql.Open("oci8", dsn)
 	if err != nil {
 		log.Panic(err)
