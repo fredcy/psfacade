@@ -38,7 +38,12 @@ func GetTeacherSched(db *sql.DB, name string) <-chan Meeting {
     s.section_number,
     s.room
     from sections s
-    join teachers on s.teacher = teachers.id
+
+    join sectionteacher on s.id = sectionteacher.sectionid
+    join roledef on (sectionteacher.roleid = roledef.id
+       and roledef.name in ('Lead Teacher', 'Co-teacher'))
+    join teachers on sectionteacher.teacherid = teachers.id
+
     join courses on s.course_number = courses.course_number
     join sm1 on s.id = sm1.sectionid
     join sm2 on s.id = sm2.sectionid and sm1.cycle_day_letter = sm2.cycle_day_letter
@@ -59,6 +64,7 @@ func GetTeacherSched(db *sql.DB, name string) <-chan Meeting {
     and period1.period_number < 21
     and s.course_number not in ('SLD100', 'SLD102', 'SLD200', 'SLD210', 'SLD600')  -- Res Life, LASSI, Nav, LEAD, I-Day Attendance
     and teachers.loginid is not null  -- ignore placeholders like "Staff, New"
+    and cd.date_value between sectionteacher.start_date and sectionteacher.end_date
     order by teachers.loginid, cd.date_value, sm1.period_min
 `
 	return GetPSMeetings(db, query, name)
