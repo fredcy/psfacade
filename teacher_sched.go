@@ -173,6 +173,8 @@ func TeacherCalendar(db *sql.DB, loginid string) *ical.Component {
 	vtimezone := calTimezone()
 	cal.AddComponent(&vtimezone)
 
+	dateStamp := time.Now().Format("2006-01-02T15:04")
+
 	for mtg := range ch {
 		e := ical.Component{}
 		e.SetName("VEVENT")
@@ -181,8 +183,8 @@ func TeacherCalendar(db *sql.DB, loginid string) *ical.Component {
 		e.Set("DTEND", ical.VDateTime(mtg.start.Add(time.Duration(mtg.duration)*time.Minute)))
 		//e.Set("DURATION", ical.VDuration(time.Duration(mtg.duration)*time.Minute))
 		e.Set("SUMMARY", ical.VString(mtg.courseName))
-		e.Set("DESCRIPTION", ical.VString(fmt.Sprintf("%s (%s-%s) -- %s",
-			mtg.courseName, mtg.courseNumber, mtg.sectionNumber, mtg.room)))
+		e.Set("DESCRIPTION", ical.VString(fmt.Sprintf("%s (%s-%s) -- %s\n\n#pscal_generated %s",
+			mtg.courseName, mtg.courseNumber, mtg.sectionNumber, mtg.room, dateStamp)))
 		organizer := ical.NewProperty("ORGANIZER", ical.VString(fmt.Sprintf("mailto:%s@imsa.edu", mtg.loginid)))
 		//organizer.Add("CN", ical.VString("TODO-CN"))
 		e.AddProperty(&organizer)
@@ -215,6 +217,8 @@ func RoomCalendar(db *sql.DB, room string) *ical.Component {
 	vtimezone := calTimezone()
 	cal.AddComponent(&vtimezone)
 
+	dateStamp := time.Now().Format("2006-01-02T15:04")
+
 	for mtg := range ch {
 		e := ical.Component{}
 		e.SetName("VEVENT")
@@ -222,8 +226,8 @@ func RoomCalendar(db *sql.DB, room string) *ical.Component {
 		e.Set("DTSTART", dtstart)
 		e.Set("DTEND", ical.VDateTime(mtg.start.Add(time.Duration(mtg.duration)*time.Minute)))
 		e.Set("SUMMARY", ical.VString(mtg.courseName))
-		e.Set("DESCRIPTION", ical.VString(fmt.Sprintf("%s (%s-%d) -- %s",
-			mtg.courseName, mtg.courseNumber, mtg.sectionNumber, mtg.room)))
+		e.Set("DESCRIPTION", ical.VString(fmt.Sprintf("%s (%s-%s) -- %s\n\n#pscal_generated %s",
+			mtg.courseName, mtg.courseNumber, mtg.sectionNumber, mtg.room, dateStamp)))
 		organizer := ical.NewProperty("ORGANIZER", ical.VString(fmt.Sprintf("mailto:%s@imsa.edu", mtg.loginid)))
 		//organizer.Add("CN", ical.VString("TODO-CN"))
 		e.AddProperty(&organizer)
