@@ -1,0 +1,6 @@
+github.com/fredcy/icalendar v0.0.0-20140130230226-c5cc2817f462 h1:vre1MkeqYQWnPtdgScLwQrt7K8eAL0pT1b6DI4zexsw=
+github.com/fredcy/icalendar v0.0.0-20140130230226-c5cc2817f462/go.mod h1:fujMP9IZ0C488Brwj8D/WVzFTBUozfkpHXUOT1wdt28=
+github.com/gorilla/mux v1.8.0 h1:i40aqfkR1h2SlN9hojwV5ZA91wcXFOvkdNIeFDP5koI=
+github.com/gorilla/mux v1.8.0/go.mod h1:DVbg23sWSpFRCP0SfiEN6jmj59UnW/n46BH5rLB71So=
+github.com/mattn/go-oci8 v0.1.1 h1:aEUDxNAyDG0tv8CA3TArnDQNyc4EhnWlsfxRgDHABHM=
+github.com/mattn/go-oci8 v0.1.1/go.mod h1:wjDx6Xm9q7dFtHJvIlrI99JytznLw5wQ4R+9mNXJwGI=

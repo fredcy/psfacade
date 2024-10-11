@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/fredcy/psfacade"
 	"github.com/gorilla/mux"
+	_ "github.com/mattn/go-oci8"
 	"log"
 	"net/http"
 	"os"
